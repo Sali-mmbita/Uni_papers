@@ -1,0 +1,15 @@
+<!-- app/templates/dashboard.html -->
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="card shadow p-4">
+  <h2>Welcome, {{ user.username }} 🎉</h2>
+  <p>Email: {{ user.email }}</p>
+  <p>Account created: {{ user.created_at.strftime('%B %d, %Y') }}</p>
+
+  <hr>
+  <p class="text-muted">Here you’ll soon be able to upload & search past papers 📚.</p>
+</div>
+{% endblock %}
