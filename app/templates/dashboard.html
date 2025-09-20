@@ -1,15 +1,23 @@
-<!-- app/templates/dashboard.html -->
 {% extends "base.html" %}
-
 {% block title %}Dashboard{% endblock %}
-
 {% block content %}
-<div class="card shadow p-4">
-  <h2>Welcome, {{ user.username }} 🎉</h2>
-  <p>Email: {{ user.email }}</p>
-  <p>Account created: {{ user.created_at.strftime('%B %d, %Y') }}</p>
-
-  <hr>
-  <p class="text-muted">Here you’ll soon be able to upload & search past papers 📚.</p>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>Welcome, {{ user.username }} </h2>
+  <a href="{{ url_for('main.upload_paper') }}" class="btn btn-success">Upload Paper</a>
 </div>
+
+<hr>
+<h4>Your Uploaded Papers</h4>
+{% if user.papers %}
+  <ul class="list-group">
+    {% for paper in user.papers %}
+      <li class="list-group-item d-flex justify-content-between">
+        <span>{{ paper.title }} ({{ paper.subject }}, {{ paper.year }})</span>
+        <a href="{{ url_for('main.download_file', filename=paper.file_path) }}" class="btn btn-sm btn-primary">Download</a>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No papers uploaded yet.</p>
+{% endif %}
 {% endblock %}

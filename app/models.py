@@ -20,3 +20,18 @@ class User(UserMixin, db.Model):
     # Verify hashed password
     def check_password(self, password: str) -> bool:
         return bcrypt.check_password_hash(self.password_hash, password)
+
+# 🔹 New Paper Model
+class Paper(db.Model):
+    __tablename__ = 'papers'
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    subject = db.Column(db.String(100), nullable=False)
+    year = db.Column(db.String(10), nullable=True)
+    file_path = db.Column(db.String(200), nullable=False)   # where file is saved
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationship: who uploaded the file
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    uploader = db.relationship("User", backref="papers")
