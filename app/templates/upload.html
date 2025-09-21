@@ -1,23 +1,35 @@
+<!-- templates/upload.html -->
 {% extends "base.html" %}
-{% block title %}Upload Paper{% endblock %}
 {% block content %}
-<div class="card shadow p-4">
-  <h3>Upload Study Material</h3>
-  <form method="POST" enctype="multipart/form-data">
-    {{ form.hidden_tag() }}
+<div class="container mt-4">
+  <h2>Upload New Paper</h2>
+  <form action="{{ url_for('main.upload') }}" method="POST" enctype="multipart/form-data">
+    
+    <!-- Title -->
     <div class="mb-3">
-      {{ form.title.label }} {{ form.title(class="form-control") }}
+      <label for="title" class="form-label">Title</label>
+      <input type="text" class="form-control" id="title" name="title" required>
     </div>
+
+    <!-- Subject -->
     <div class="mb-3">
-      {{ form.subject.label }} {{ form.subject(class="form-control") }}
+      <label for="subject" class="form-label">Subject</label>
+      <input type="text" class="form-control" id="subject" name="subject" required>
     </div>
+
+    <!-- Year -->
     <div class="mb-3">
-      {{ form.year.label }} {{ form.year(class="form-control") }}
+      <label for="year" class="form-label">Year</label>
+      <input type="text" class="form-control" id="year" name="year">
     </div>
+
+    <!-- File -->
     <div class="mb-3">
-      {{ form.file.label }} {{ form.file(class="form-control") }}
+      <label for="file" class="form-label">Choose File</label>
+      <input type="file" class="form-control" id="file" name="file" required>
     </div>
-    {{ form.submit(class="btn btn-primary") }}
+
+    <button type="submit" class="btn btn-primary">Upload</button>
   </form>
 </div>
 {% endblock %}

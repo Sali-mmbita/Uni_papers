@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-3">{{ paper.title }}</h2>
+  <ul class="list-group mb-4">
+    <li class="list-group-item"><strong>Subject:</strong> {{ paper.subject }}</li>
+    <li class="list-group-item"><strong>Year:</strong> {{ paper.year }}</li>
+    <li class="list-group-item"><strong>Uploaded:</strong> {{ paper.uploaded_at.strftime("%Y-%m-%d %H:%M") }}</li>
+    <li class="list-group-item"><strong>Uploaded By:</strong> {{ paper.uploader.username }}</li>
+  </ul>
+
+  <!-- Action buttons -->
+  <a href="{{ url_for('main.preview', paper_id=paper.id) }}" target="_blank" class="btn btn-info">
+    Preview
+  </a>
+  <a href="{{ url_for('main.download', paper_id=paper.id) }}" class="btn btn-success">
+    Download
+  </a>
+  <a href="{{ url_for('main.papers') }}" class="btn btn-secondary">
+    &larr; Back to Papers
+  </a>
+</div>
+{% endblock %}

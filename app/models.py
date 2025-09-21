@@ -24,7 +24,7 @@ class User(UserMixin, db.Model):
 # 🔹 New Paper Model
 class Paper(db.Model):
     __tablename__ = 'papers'
-
+    
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
     subject = db.Column(db.String(100), nullable=False)
