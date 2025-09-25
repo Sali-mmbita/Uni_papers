@@ -5,76 +5,60 @@ from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
 from dotenv import load_dotenv
 from flask_migrate import Migrate
+from flask_wtf import CSRFProtect
 import os
 
-# ------------------------------------------------
-# Load environment variables from .env
-# (like SECRET_KEY and DATABASE_URL)
-# ------------------------------------------------
 load_dotenv()
 
-# ------------------------------------------------
-# Initialize Flask extensions (but don't bind yet)
-# ------------------------------------------------
+# Extensions (initialized but not bound to app)
 db = SQLAlchemy()
 bcrypt = Bcrypt()
 login_manager = LoginManager()
+migrate = Migrate()
+csrf = CSRFProtect()  # CSRF protection
 
-# This sets where Flask-Login redirects users when login is required
+# Flask-Login config
 login_manager.login_view = "auth.login"
 login_manager.login_message_category = "info"
 
 UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
 ALLOWED_EXTENSIONS = {"pdf", "docx"}
 
-def create_app():
-    """Factory function to create and configure the Flask app"""
 
+def create_app():
     app = Flask(__name__)
 
-    # ------------------------------------------------
-    # App Configuration
-    # ------------------------------------------------
+    # Basic config
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev_secret_key")
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
-        "DATABASE_URL", "sqlite:///site.db"
-    )
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "sqlite:///site.db")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    
-    # File upload configuration
-    app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-    app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # limit: 16MB
 
-    # make sure uploads folder exists
+    # Upload config
+    app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+    app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB
+
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-    
-    # ------------------------------------------------
-    # Bind extensions to the app
-    # ------------------------------------------------
+
+    # Bind extensions
     db.init_app(app)
     bcrypt.init_app(app)
     login_manager.init_app(app)
-    
-    # ✅ Enable Flask-Migrate
-    Migrate(app, db)
+    migrate.init_app(app, db)
+    csrf.init_app(app)  # enable CSRF protection
 
-    # ------------------------------------------------
-    # User loader function for Flask-Login
-    # (import inside to avoid circular import issues)
-    # ------------------------------------------------
+    # user loader for flask-login
     @login_manager.user_loader
     def load_user(user_id):
-        from .models import User  # import here instead of top
-
+        from .models import User
         return User.query.get(int(user_id))
 
-    # ------------------------------------------------
-    # Register Blueprints
-    # ------------------------------------------------
+    # Register blueprints
     from .auth import auth as auth_blueprint
     from .main import main as main_blueprint
+    from .admin import admin as admin_blueprint   # ✅ use admin/__init__.py only
 
     app.register_blueprint(auth_blueprint)
     app.register_blueprint(main_blueprint)
+    app.register_blueprint(admin_blueprint, url_prefix="/admin")
 
     return app

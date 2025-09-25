@@ -1,97 +1,173 @@
-<!-- app/templates/dashboard.html -->
+<!-- templates/dashboard.html -->
 {% extends "base.html" %}
+{% block title %}Dashboard - PastPapers Hub{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-  <h2 class="mb-4"> Welcome, {{ user.username }}!</h2>
+<!--
+  Dashboard shows:
+  - Global search/filter (affects all papers shown)
+  - Quick cards (Upload, Browse)
+  - Recent uploads (latest 5) from current_user
+  - Paginated global listing (papers is expected to be paginate object)
+-->
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="page-title mb-0">Dashboard</h1>
+    <p class="small-muted mb-0">Welcome back, {{ current_user.username }}.</p>
+  </div>
 
-  <!-- Dashboard quick links -->
-  <div class="row mb-4">
-    <!-- 📤 Upload Papers -->
-    <div class="col-md-4">
-      <div class="card shadow-sm">
-        <div class="card-body text-center">
-          <h5 class="card-title"> Upload Papers</h5>
-          <p class="card-text">Contribute by uploading past papers.</p>
-          <a href="{{ url_for('main.upload') }}" class="btn btn-primary">Upload</a>
-        </div>
-      </div>
+  <div>
+    <a href="{{ url_for('main.upload') }}" class="btn btn-primary">
+      <i class="bi bi-upload"></i> Upload Paper
+    </a>
+  </div>
+</div>
+
+<!-- Search & small filters (applies to global listing below) -->
+<form method="GET" action="{{ url_for('main.dashboard') }}" class="row g-2 mb-4">
+  <div class="col-md-5">
+    <div class="input-group">
+      <span class="input-group-text"><i class="bi bi-search"></i></span>
+      <input type="text" name="q" class="form-control" placeholder="Search title / subject / year" value="{{ request.args.get('q', '') }}">
     </div>
+  </div>
+  <div class="col-md-3">
+    <input type="text" name="subject" class="form-control" placeholder="Subject filter" value="{{ request.args.get('subject', '') }}">
+  </div>
+  <div class="col-md-2">
+    <input type="text" name="year" class="form-control" placeholder="Year" value="{{ request.args.get('year', '') }}">
+  </div>
+  <div class="col-md-2 d-grid">
+    <button class="btn btn-outline-primary" type="submit"><i class="bi bi-funnel"></i> Filter</button>
+  </div>
+</form>
 
-    <!-- 🔎 Browse Papers -->
-    <div class="col-md-4">
-      <div class="card shadow-sm">
-        <div class="card-body text-center">
-          <h5 class="card-title"> Browse Papers</h5>
-          <p class="card-text">Search and filter available study materials.</p>
-          <a href="{{ url_for('main.papers') }}" class="btn btn-success">Browse</a>
+<!-- Quick cards row -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column justify-content-between">
+        <div>
+          <h5 class="card-title">Upload Papers</h5>
+          <p class="card-text small-muted">Share past papers for the community.</p>
         </div>
-      </div>
-    </div>
-
-    <!-- 👤 Profile -->
-    <div class="col-md-4">
-      <div class="card shadow-sm">
-        <div class="card-body text-center">
-          <h5 class="card-title"> Profile</h5>
-          <p class="card-text">Manage your account (coming soon).</p>
-          <a href="#" class="btn btn-secondary disabled">Coming Soon</a>
+        <div class="mt-3">
+          <a href="{{ url_for('main.upload') }}" class="btn btn-primary btn-sm"><i class="bi bi-upload"></i> Upload</a>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Uploaded Papers Table -->
-  <h4>Your Recent Uploads</h4>
-  {% if papers %}
-    <table class="table table-bordered table-striped">
-      <thead class="table-dark">
-        <tr>
-          <th>Title</th>
-          <th>Subject</th>
-          <th>Year</th>
-          <th>Uploaded At</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for paper in papers[:5] %}  {# show only latest 5 #}
-        <tr>
-          <td>{{ paper.title }}</td>
-          <td>{{ paper.subject }}</td>
-          <td>{{ paper.year }}</td>
-          <td>{{ paper.uploaded_at.strftime("%Y-%m-%d %H:%M") }}</td>
-          <td>
-            <!-- Preview button -->
-            <a href="{{ url_for('main.preview', paper_id=paper.id) }}" target="_blank" class="btn btn-info btn-sm">
-              Preview
-            </a>
-            <!-- Download button -->
-            <a href="{{ url_for('main.download', paper_id=paper.id) }}" class="btn btn-success btn-sm">
-              Download
-            </a>
-            <!-- Delete button -->
-            <form action="{{ url_for('main.delete_paper', paper_id=paper.id) }}" method="POST" style="display:inline;">
-              <button type="submit" class="btn btn-danger btn-sm"
-                onclick="return confirm('Are you sure you want to delete this paper?');">
-                Delete
-              </button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-
-    <!-- See All button -->
-    {% if papers|length > 5 %}
-      <div class="text-end">
-        <a href="{{ url_for('main.my_papers') }}" class="btn btn-outline-primary btn-sm">See All My Papers</a>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column justify-content-between">
+        <div>
+          <h5 class="card-title">Browse Papers</h5>
+          <p class="card-text small-muted">Search and filter all uploaded materials.</p>
+        </div>
+        <div class="mt-3">
+          <a href="{{ url_for('main.papers') }}" class="btn btn-success btn-sm"><i class="bi bi-book"></i> Browse</a>
+        </div>
       </div>
-    {% endif %}
-  {% else %}
-    <div class="alert alert-info">
-      You haven’t uploaded any past papers yet. Click <strong>Upload Papers</strong> above to add one.
     </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column justify-content-between">
+        <div>
+          <h5 class="card-title">My Papers</h5>
+          <p class="card-text small-muted">Manage your uploads and metadata.</p>
+        </div>
+        <div class="mt-3">
+          <a href="{{ url_for('main.my_papers') }}" class="btn btn-secondary btn-sm"><i class="bi bi-folder2-open"></i> My Papers</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent uploads by current user -->
+<div class="mb-4">
+  <h5 class="mb-2">Recent Uploads</h5>
+  {% if current_user.papers %}
+    <div class="list-group">
+      {% for p in current_user.papers[:5] %}
+        <div class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <strong>{{ p.title }}</strong>
+            <div class="small-muted">{{ p.subject }} · {{ p.year or "N/A" }}</div>
+            <div class="small-muted">Uploaded {{ p.uploaded_at.strftime("%Y-%m-%d") }}</div>
+          </div>
+          <div>
+            <a href="{{ url_for('main.view_paper', paper_id=p.id) }}" class="btn btn-sm btn-outline-info me-1">View</a>
+            <a href="{{ url_for('main.download', paper_id=p.id) }}" class="btn btn-sm btn-outline-success">Download</a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-info">You haven't uploaded anything yet. Click Upload to add a paper.</div>
+  {% endif %}
+</div>
+
+<!-- Global paginated listing (papers is expected to be paginate object) -->
+<div>
+  <h5 class="mb-3">All Papers</h5>
+
+  {% if papers.items %}
+    <div class="row g-3">
+      {% for paper in papers.items %}
+      <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body">
+            <h6 class="card-title">{{ paper.title }}</h6>
+            <p class="card-text small-muted mb-1">{{ paper.subject }} · {{ paper.year or "N/A" }}</p>
+            <p class="small-muted">By {{ paper.author.username }} · {{ paper.uploaded_at.strftime("%Y-%m-%d") }}</p>
+          </div>
+          <div class="card-footer text-end bg-white">
+            <a href="{{ url_for('main.view_paper', paper_id=paper.id) }}" class="btn btn-sm btn-info me-1"><i class="bi bi-eye"></i> View</a>
+            <a href="{{ url_for('main.download', paper_id=paper.id) }}" class="btn btn-sm btn-success"><i class="bi bi-download"></i></a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination controls -->
+    <nav aria-label="dashboard pagination" class="mt-4">
+      <ul class="pagination justify-content-center">
+        {% if papers.has_prev %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('main.dashboard', page=papers.prev_num, q=request.args.get('q'), subject=request.args.get('subject'), year=request.args.get('year')) }}">Previous</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        {% endif %}
+
+        {% for p in papers.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=1) %}
+          {% if p %}
+            {% if p == papers.page %}
+              <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+            {% else %}
+              <li class="page-item"><a class="page-link" href="{{ url_for('main.dashboard', page=p, q=request.args.get('q'), subject=request.args.get('subject'), year=request.args.get('year')) }}">{{ p }}</a></li>
+            {% endif %}
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+
+        {% if papers.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('main.dashboard', page=papers.next_num, q=request.args.get('q'), subject=request.args.get('subject'), year=request.args.get('year')) }}">Next</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Next</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% else %}
+    <div class="alert alert-warning">No papers found for the chosen filters.</div>
   {% endif %}
 </div>
 {% endblock %}

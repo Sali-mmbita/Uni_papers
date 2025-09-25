@@ -1,48 +1,94 @@
-<!-- app/templates/base.html -->
-<!doctype html>
+<!-- templates/base.html -->
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Uni Papers{% endblock %}</title>
+  <!--
+    Base layout used by all pages.
+    Includes Bootstrap 5.3, Bootstrap Icons, a responsive navbar,
+    flash message area, and a content block for child templates.
+  -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{% block title %}PastPapers Hub{% endblock %}</title>
+
   <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- Optional small custom style to tighten card spacing -->
+  <style>
+    body { background: #f8f9fa; }
+    .card { border-radius: 10px; }
+    .page-title { font-weight: 600; }
+    .small-muted { font-size: 0.9rem; color: #6c757d; }
+    .nav-link.text-danger { color: #ff6b6b !important; }
+  </style>
+
+  {% block head %}{% endblock %}
 </head>
 <body>
-
-  <!-- 🔹 Navbar -->
+  <!-- NAVBAR: brand + links that depend on auth state -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="{{ url_for('main.home') }}">UniPapers</a>
+    <div class="container">
+      <a class="navbar-brand" href="{{ url_for('main.home') }}">PastPapers Hub</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navCollapse"
+              aria-controls="navCollapse" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
 
-      <div class="collapse navbar-collapse">
-        <ul class="navbar-nav ms-auto">
+      <div class="collapse navbar-collapse" id="navCollapse">
+        <ul class="navbar-nav ms-auto align-items-lg-center">
           {% if current_user.is_authenticated %}
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('main.my_papers') }}">My Papers</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('main.papers') }}">All Papers</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('main.upload') }}">Upload</a></li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-person-circle"></i> {{ current_user.username }}
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                <li><a class="dropdown-item" href="{{ url_for('main.my_papers') }}">My Papers</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('main.upload') }}">Upload Paper</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">Logout</a></li>
+              </ul>
             </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
-            </li>
+            {% if current_user.is_admin() %}
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.dashboard') }}">Admin</a></li>
+            {% endif %}
           {% else %}
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('auth.register') }}">Register</a>
-            </li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.login') }}">Login</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.register') }}">Register</a></li>
           {% endif %}
         </ul>
       </div>
     </div>
   </nav>
 
-  <!-- 🔹 Page Content -->
-  <div class="container mt-4">
-    {% block content %}{% endblock %}
+  <!-- FLASH MESSAGES (site-wide): categories map to Bootstrap alert classes -->
+  <div class="container mt-3">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
   </div>
 
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- MAIN CONTENT -->
+  <main class="container my-4">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Bootstrap JS bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  {% block scripts %}{% endblock %}
 </body>
 </html>

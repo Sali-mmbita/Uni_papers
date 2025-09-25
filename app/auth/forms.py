@@ -1,6 +1,6 @@
 # app/auth/forms.py
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, SelectField
 from wtforms.validators import DataRequired, Email, Length, EqualTo
 
 class RegistrationForm(FlaskForm):
@@ -9,6 +9,13 @@ class RegistrationForm(FlaskForm):
     password = PasswordField("Password", validators=[DataRequired(), Length(min=6)])
     confirm_password = PasswordField("Confirm Password", validators=[DataRequired(), EqualTo("password")])
     submit = SubmitField("Create Account")
+        # Optional role field (default user, admin selectable only if needed)
+    role = SelectField(
+        "Role",
+        choices=[("user", "User"), ("admin", "Admin")],
+        default="user"
+    )
+
 
 class LoginForm(FlaskForm):
     email = StringField("Email", validators=[DataRequired(), Email()])

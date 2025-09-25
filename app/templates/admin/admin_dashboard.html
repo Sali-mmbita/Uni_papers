@@ -1,0 +1,137 @@
+<!-- templates/admin/admin_dashboard.html -->
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="page-title mb-0">Admin Dashboard</h1>
+    <p class="small-muted mb-0">Manage users and papers on the platform.</p>
+  </div>
+</div>
+
+<!-- Users table -->
+<div class="card mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <strong>Users</strong>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-sm">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users.items %}
+          <tr>
+            <td>{{ user.id }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.role }}</td>
+            <td>
+              <!-- Promote / Demote -->
+              {% if user.role != 'admin' %}
+                <form method="POST" action="{{ url_for('admin.promote_user', user_id=user.id) }}" style="display:inline;">
+                  <button class="btn btn-sm btn-success" onclick="return confirm('Promote {{ user.username }} to admin?')">Promote</button>
+                </form>
+              {% else %}
+                <form method="POST" action="{{ url_for('admin.demote_user', user_id=user.id) }}" style="display:inline;">
+                  <button class="btn btn-sm btn-warning" onclick="return confirm('Demote {{ user.username }} to user?')">Demote</button>
+                </form>
+              {% endif %}
+
+              <!-- Delete user -->
+              <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" style="display:inline;">
+                <button class="btn btn-sm btn-danger" onclick="return confirm('Delete user {{ user.username }} and their papers?')">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- users pagination -->
+    <nav>
+      <ul class="pagination">
+        {% if users.has_prev %}
+          <li class="page-item"><a class="page-link" href="{{ url_for('admin.dashboard', user_page=users.prev_num) }}">Prev</a></li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Prev</span></li>
+        {% endif %}
+        <li class="page-item disabled"><span class="page-link">Page {{ users.page }} / {{ users.pages }}</span></li>
+        {% if users.has_next %}
+          <li class="page-item"><a class="page-link" href="{{ url_for('admin.dashboard', user_page=users.next_num) }}">Next</a></li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Next</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<!-- Papers table -->
+<div class="card mb-4">
+  <div class="card-header">
+    <strong>All Papers</strong>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-sm">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Title</th>
+            <th>Subject</th>
+            <th>Year</th>
+            <th>Uploader</th>
+            <th>Uploaded At</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in papers.items %}
+          <tr>
+            <td>{{ p.id }}</td>
+            <td>{{ p.title }}</td>
+            <td>{{ p.subject }}</td>
+            <td>{{ p.year or 'N/A' }}</td>
+            <td>{{ p.author.username }}</td>
+            <td>{{ p.uploaded_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>
+              <a class="btn btn-sm btn-info" href="{{ url_for('main.view_paper', paper_id=p.id) }}">View</a>
+              <form method="POST" action="{{ url_for('admin.delete_paper_admin', paper_id=p.id) }}" style="display:inline;">
+                <button class="btn btn-sm btn-danger" onclick="return confirm('Delete this paper?')">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- papers pagination -->
+    <nav>
+      <ul class="pagination">
+        {% if papers.has_prev %}
+          <li class="page-item"><a class="page-link" href="{{ url_for('admin.dashboard', paper_page=papers.prev_num) }}">Prev</a></li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Prev</span></li>
+        {% endif %}
+        <li class="page-item disabled"><span class="page-link">Page {{ papers.page }} / {{ papers.pages }}</span></li>
+        {% if papers.has_next %}
+          <li class="page-item"><a class="page-link" href="{{ url_for('admin.dashboard', paper_page=papers.next_num) }}">Next</a></li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Next</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+</div>
+{% endblock %}

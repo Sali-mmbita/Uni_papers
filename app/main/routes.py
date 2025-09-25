@@ -6,6 +6,8 @@ from werkzeug.utils import secure_filename
 from . import main
 from .. import db
 from ..models import Paper   # ✅ import Paper model
+from ..decorators import admin_required
+
 
 @main.route("/")
 def home():
@@ -15,8 +17,33 @@ def home():
 @main.route("/dashboard")
 @login_required
 def dashboard():
-    """Student dashboard page"""
-    papers = Paper.query.filter_by(user_id=current_user.id).all()
+    """Student dashboard - shows all papers with search, filter, and pagination"""
+
+    # Get page number from request, default 1
+    page = request.args.get("page", 1, type=int)
+
+    # ✅ Ensure per_page is always >= 1
+    per_page = request.args.get("per_page", 5, type=int)
+    if per_page < 1:
+        per_page = 5
+
+    query = Paper.query  # start with all papers
+
+    # Optional search and filter
+    search = request.args.get("q")
+    subject = request.args.get("subject")
+    year = request.args.get("year")
+
+    if search:
+        query = query.filter(Paper.title.ilike(f"%{search}%"))
+    if subject:
+        query = query.filter(Paper.subject.ilike(f"%{subject}%"))
+    if year:
+        query = query.filter(Paper.year == year)
+
+    # ✅ Paginate safely
+    papers = query.order_by(Paper.uploaded_at.desc()).paginate(page=page, per_page=per_page)
+
     return render_template("dashboard.html", user=current_user, papers=papers)
 
 @main.route("/upload", methods=["GET", "POST"])
@@ -39,12 +66,12 @@ def upload():
         filepath = os.path.join(upload_folder, filename)
         file.save(filepath)
 
-        # ✅ FIX: use file_path instead of filename
+        # ✅ save to DB
         new_paper = Paper(
             title=title,
             subject=subject,
             year=year,
-            file_path=filepath,   # matches your model
+            file_path=filepath,
             user_id=current_user.id
         )
 
@@ -56,6 +83,7 @@ def upload():
 
     return render_template("upload.html")
 
+
 @main.route("/download/<int:paper_id>")
 @login_required
 def download(paper_id):
@@ -64,12 +92,11 @@ def download(paper_id):
     upload_folder = current_app.config["UPLOAD_FOLDER"]
     return send_from_directory(upload_folder, os.path.basename(paper.file_path), as_attachment=True)
 
-# preview route to view PDFs/images inline
 
 @main.route("/preview/<int:paper_id>")
 @login_required
 def preview(paper_id):
-    """Preview an uploaded paper (PDFs/images inline, others will download)"""
+    """Preview an uploaded paper (PDFs/images inline, others download)"""
     paper = Paper.query.get_or_404(paper_id)
     upload_folder = current_app.config["UPLOAD_FOLDER"]
 
@@ -79,7 +106,6 @@ def preview(paper_id):
         as_attachment=False  # 👈 lets browser preview if supported
     )
 
-# Delete route to remove a paper
 
 @main.route("/delete/<int:paper_id>", methods=["POST"])
 @login_required
@@ -103,46 +129,65 @@ def delete_paper(paper_id):
     flash("Paper deleted successfully!", "success")
     return redirect(url_for("main.dashboard"))
 
-# 🔹 Search & filter for papers
+
+# 🔹 Search & filter for papers (global search)
 @main.route("/papers")
 def papers():
-    """Search and filter past papers"""
+    """Search and filter past papers with pagination"""
 
     # Get query parameters from search form
-    search_query = request.args.get("q")  # general search
+    query = request.args.get("q")  # general search
     subject_filter = request.args.get("subject")
     year_filter = request.args.get("year")
 
     # Base query (start with all papers)
-    query = Paper.query
+    papers_query = Paper.query
 
     # Apply filters dynamically
-    if search_query:
-        query = query.filter(Paper.title.ilike(f"%{search_query}%"))
+    if query:
+        papers_query = papers_query.filter(
+            (Paper.title.ilike(f"%{query}%")) |
+            (Paper.subject.ilike(f"%{query}%")) |
+            (Paper.year.ilike(f"%{query}%"))
+        )
     if subject_filter:
-        query = query.filter(Paper.subject.ilike(f"%{subject_filter}%"))
+        papers_query = papers_query.filter(Paper.subject.ilike(f"%{subject_filter}%"))
     if year_filter:
-        query = query.filter(Paper.year == year_filter)
+        papers_query = papers_query.filter(Paper.year == year_filter)
 
-    # Execute query
-    results = query.order_by(Paper.uploaded_at.desc()).all()
-    
+    # Pagination (6 per page)
+    page = request.args.get("page", 1, type=int)
+    results = papers_query.order_by(Paper.uploaded_at.desc()).paginate(page=page, per_page=6)
+
     return render_template("papers.html", papers=results)
 
-    
 
-# View all papers uploaded by the logged-in user
 @main.route("/my_papers")
 @login_required
 def my_papers():
-    """Show all papers uploaded by the current user"""
-    papers = Paper.query.filter_by(user_id=current_user.id).order_by(Paper.uploaded_at.desc()).all()
+    """Show only the logged-in user's uploaded papers with pagination"""
+
+    page = request.args.get("page", 1, type=int)
+
+    papers = Paper.query.filter_by(user_id=current_user.id) \
+        .order_by(Paper.uploaded_at.desc()) \
+        .paginate(page=page, per_page=5)
+
     return render_template("my_papers.html", papers=papers)
 
-# View a single paper's details
+
 @main.route("/view/<int:paper_id>")
 @login_required
 def view_paper(paper_id):
     """Dedicated page to view a single paper with details + preview/download links"""
     paper = Paper.query.get_or_404(paper_id)
     return render_template("view_paper.html", paper=paper)
+
+
+@main.route("/admin/dashboard")
+@login_required
+@admin_required
+def admin_dashboard():
+    """Admin dashboard showing all uploaded papers"""
+    papers = Paper.query.order_by(Paper.uploaded_at.desc()).all()
+    return render_template("admin_dashboard.html", papers=papers)
