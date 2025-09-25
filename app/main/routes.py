@@ -6,8 +6,8 @@ from werkzeug.utils import secure_filename
 from . import main
 from .. import db
 from ..models import Paper   # ✅ import Paper model
-from ..decorators import admin_required
-
+from ..utils.decorators import admin_required
+from ..forms import PaperUploadForm # ✅ import the upload form
 
 @main.route("/")
 def home():
@@ -46,44 +46,40 @@ def dashboard():
 
     return render_template("dashboard.html", user=current_user, papers=papers)
 
+# Upload route
 @main.route("/upload", methods=["GET", "POST"])
 @login_required
 def upload():
-    """Upload new past paper"""
-    if request.method == "POST":
-        title = request.form.get("title")
-        subject = request.form.get("subject")
-        year = request.form.get("year")
-        file = request.files["file"]
-
-        if not file:
-            flash("No file selected!", "danger")
-            return redirect(url_for("main.upload"))
-
-        # Secure filename
-        filename = secure_filename(file.filename)
+    """Upload new past paper - uses Flask-WTF form (includes CSRF token)."""
+    form = PaperUploadForm()
+    if form.validate_on_submit():
+        # form.file is a FileStorage
+        uploaded = form.file.data
+        filename = secure_filename(uploaded.filename)
         upload_folder = current_app.config["UPLOAD_FOLDER"]
+        os.makedirs(upload_folder, exist_ok=True)
         filepath = os.path.join(upload_folder, filename)
-        file.save(filepath)
+        uploaded.save(filepath)
 
-        # ✅ save to DB
+        # Save to database
         new_paper = Paper(
-            title=title,
-            subject=subject,
-            year=year,
+            title=form.title.data,
+            subject=form.subject.data,
+            year=form.year.data or None,
             file_path=filepath,
             user_id=current_user.id
         )
-
+        
+        # Save to DB
         db.session.add(new_paper)
         db.session.commit()
-
         flash("Paper uploaded successfully!", "success")
         return redirect(url_for("main.dashboard"))
 
-    return render_template("upload.html")
+    # GET or invalid POST: render the page (form.hidden_tag() will include CSRF)
+    return render_template("upload.html", form=form)
 
-
+# Download route
 @main.route("/download/<int:paper_id>")
 @login_required
 def download(paper_id):
@@ -92,7 +88,7 @@ def download(paper_id):
     upload_folder = current_app.config["UPLOAD_FOLDER"]
     return send_from_directory(upload_folder, os.path.basename(paper.file_path), as_attachment=True)
 
-
+# Preview route
 @main.route("/preview/<int:paper_id>")
 @login_required
 def preview(paper_id):
@@ -106,7 +102,7 @@ def preview(paper_id):
         as_attachment=False  # 👈 lets browser preview if supported
     )
 
-
+# Delete route
 @main.route("/delete/<int:paper_id>", methods=["POST"])
 @login_required
 def delete_paper(paper_id):
@@ -161,7 +157,10 @@ def papers():
 
     return render_template("papers.html", papers=results)
 
+# ✅ Import ConfirmForm for CSRF protection in delete forms
+from app.forms import ConfirmForm
 
+# User-specific papers view
 @main.route("/my_papers")
 @login_required
 def my_papers():
@@ -169,13 +168,18 @@ def my_papers():
 
     page = request.args.get("page", 1, type=int)
 
-    papers = Paper.query.filter_by(user_id=current_user.id) \
-        .order_by(Paper.uploaded_at.desc()) \
+    papers = (
+        Paper.query.filter_by(user_id=current_user.id)
+        .order_by(Paper.uploaded_at.desc())
         .paginate(page=page, per_page=5)
+    )
 
-    return render_template("my_papers.html", papers=papers)
+    confirm_form = ConfirmForm()  # ✅ for CSRF in delete forms
+
+    return render_template("my_papers.html", papers=papers, confirm_form=confirm_form)
 
 
+# Dedicated paper view route
 @main.route("/view/<int:paper_id>")
 @login_required
 def view_paper(paper_id):
@@ -184,10 +188,10 @@ def view_paper(paper_id):
     return render_template("view_paper.html", paper=paper)
 
 
-@main.route("/admin/dashboard")
-@login_required
-@admin_required
-def admin_dashboard():
-    """Admin dashboard showing all uploaded papers"""
-    papers = Paper.query.order_by(Paper.uploaded_at.desc()).all()
-    return render_template("admin_dashboard.html", papers=papers)
+# @main.route("/admin/dashboard")
+# @login_required
+# @admin_required
+# def admin_dashboard():
+#     """Admin dashboard showing all uploaded papers"""
+#     papers = Paper.query.order_by(Paper.uploaded_at.desc()).all()
+#     return render_template("admin_dashboard.html", papers=papers)

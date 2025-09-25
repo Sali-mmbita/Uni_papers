@@ -1,46 +1,25 @@
-<!-- templates/upload.html -->
 {% extends "base.html" %}
 {% block title %}Upload Paper{% endblock %}
 
 {% block content %}
-<!--
-  Upload page. Expects a plain HTML form with fields:
-  - title (text), subject (text), year (text optional), file (file input)
-  Submits POST to main.upload route with multipart/form-data.
--->
-<div class="row justify-content-center">
-  <div class="col-md-8">
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h4 class="mb-3">Upload a Past Paper</h4>
-        <form method="POST" action="{{ url_for('main.upload') }}" enctype="multipart/form-data">
-          <div class="mb-3">
-            <label for="title" class="form-label">Title</label>
-            <input id="title" name="title" type="text" class="form-control" placeholder="e.g. Calculus Past Paper">
-          </div>
+<div class="container mt-4">
+  <h2>Upload a Paper</h2>
 
-          <div class="mb-3">
-            <label for="subject" class="form-label">Subject</label>
-            <input id="subject" name="subject" type="text" class="form-control" placeholder="e.g. Mathematics">
-          </div>
-
-          <div class="mb-3">
-            <label for="year" class="form-label">Year (optional)</label>
-            <input id="year" name="year" type="text" class="form-control" placeholder="e.g. 2022">
-          </div>
-
-          <div class="mb-3">
-            <label for="file" class="form-label">Choose File</label>
-            <input id="file" name="file" type="file" class="form-control">
-            <div class="form-text">Allowed: PDF, DOCX (max 16MB)</div>
-          </div>
-
-          <div class="d-grid">
-            <button class="btn btn-primary" type="submit"><i class="bi bi-upload"></i> Upload Paper</button>
-          </div>
-        </form>
-      </div>
+  <form method="POST" action="{{ url_for('main.upload') }}" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    <div class="mb-3">
+      {{ form.title.label }}{{ form.title(class="form-control") }}
     </div>
-  </div>
+    <div class="mb-3">
+      {{ form.subject.label }}{{ form.subject(class="form-control") }}
+    </div>
+    <div class="mb-3">
+      {{ form.year.label }}{{ form.year(class="form-control") }}
+    </div>
+    <div class="mb-3">
+      {{ form.file.label }}{{ form.file(class="form-control") }}
+    </div>
+    {{ form.submit(class="btn btn-primary") }}
+  </form>
 </div>
 {% endblock %}

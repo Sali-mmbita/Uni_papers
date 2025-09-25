@@ -36,6 +36,7 @@
             <a class="btn btn-sm btn-success" href="{{ url_for('main.download', paper_id=paper.id) }}"><i class="bi bi-download"></i></a>
 
             <form method="POST" action="{{ url_for('main.delete_paper', paper_id=paper.id) }}" style="display:inline;">
+              {{ confirm_form.hidden_tag() }}
               <button class="btn btn-sm btn-danger" onclick="return confirm('Delete paper?')"><i class="bi bi-trash"></i></button>
             </form>
           </td>
