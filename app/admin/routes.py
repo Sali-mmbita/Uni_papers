@@ -77,11 +77,11 @@ def ban_user(user_id):
     user = User.query.get_or_404(user_id)
     if user.role == "admin":
         flash("You cannot ban another admin.", "danger")
-        return redirect(url_for("admin.admin_dashboard"))
+        return redirect(url_for("admin.dashboard"))
     user.is_banned = True
     db.session.commit()
     flash(f"User {user.username} has been banned.", "success")
-    return redirect(url_for("admin.admin_dashboard"))
+    return redirect(url_for("admin.dashboard"))
 
 
 # Unban user
@@ -93,7 +93,7 @@ def unban_user(user_id):
     user.is_banned = False
     db.session.commit()
     flash(f"User {user.username} has been unbanned.", "success")
-    return redirect(url_for("admin.admin_dashboard"))
+    return redirect(url_for("admin.dashboard"))
 
 
 @admin.route("/delete_user/<int:user_id>", methods=["POST"])

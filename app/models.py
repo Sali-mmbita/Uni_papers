@@ -20,8 +20,7 @@ class User(UserMixin, db.Model):
     # 🔹 New role field (default = "user", can also be "admin")
     role = db.Column(db.String(10), nullable=False, default="user")
     
-    
-    is_active = db.Column(db.Boolean, default=True)
+    active = db.Column(db.Boolean, default=True)
     is_banned = db.Column(db.Boolean, default=False)
     
     # 🔹 Helper method to check if user is admin

@@ -35,36 +35,38 @@
             <td>{{ user.email }}</td>
             <td>{{ user.role }}</td>
             <td>
-              <!-- Promote / Demote -->
-              {% if user.role != 'admin' %}
-                <form method="POST" action="{{ url_for('admin.promote_user', user_id=user.id) }}" style="display:inline;">
-                   {{ confirm_form.hidden_tag() }}
-                  <button class="btn btn-sm btn-success" onclick="return confirm('Promote {{ user.username }} to admin?')">Promote</button>
+             <div class="d-flex flex-wrap gap-2">  
+                <!-- Promote / Demote -->
+                {% if user.role != 'admin' %}
+                  <form method="POST" action="{{ url_for('admin.promote_user', user_id=user.id) }}" style="display:inline;">
+                    {{ confirm_form.hidden_tag() }}
+                    <button class="btn btn-sm btn-success" onclick="return confirm('Promote {{ user.username }} to admin?')">Promote</button>
+                  </form>
+                {% else %}
+                  <form method="POST" action="{{ url_for('admin.demote_user', user_id=user.id) }}" style="display:inline;">
+                    {{ confirm_form.hidden_tag() }}
+                    <button class="btn btn-sm btn-warning" onclick="return confirm('Demote {{ user.username }} to user?')">Demote</button>
+                  </form>
+                {% endif %}
+                {% if not user.is_banned %}
+                <!-- show Ban button -->
+                <form method="POST" action="{{ url_for('admin.ban_user', user_id=user.id) }}">
+                  {{ confirm_form.hidden_tag() }}
+                <button type="submit" class="btn btn-warning btn-sm">Ban</button>
                 </form>
-              {% else %}
-                <form method="POST" action="{{ url_for('admin.demote_user', user_id=user.id) }}" style="display:inline;">
-                   {{ confirm_form.hidden_tag() }}
-                  <button class="btn btn-sm btn-warning" onclick="return confirm('Demote {{ user.username }} to user?')">Demote</button>
-                </form>
-              {% endif %}
-              {% if not user.is_banned %}
-              <!-- show Ban button -->
-              <form method="POST" action="{{ url_for('admin.ban_user', user_id=user.id) }}">
-                {{ confirm_form.hidden_tag() }}
-               <button type="submit" class="btn btn-warning btn-sm">Ban</button>
-              </form>
-              {% else %}
-              <!-- show Unban button -->
-              <form method="POST" action="{{ url_for('admin.unban_user', user_id=user.id) }}">
-                {{ confirm_form.hidden_tag() }}
-               <button type="submit" class="btn btn-success btn-sm">Unban</button>
-              {% endif %}
+                {% else %}
+                <!-- show Unban button -->
+                <form method="POST" action="{{ url_for('admin.unban_user', user_id=user.id) }}">
+                  {{ confirm_form.hidden_tag() }}
+                <button type="submit" class="btn btn-success btn-sm">Unban</button>
+                {% endif %}
 
-              <!-- Delete user -->
-              <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" style="display:inline;">
-                 {{ confirm_form.hidden_tag() }}
-                <button class="btn btn-sm btn-danger" onclick="return confirm('Delete user {{ user.username }} and their papers?')">Delete</button>
-              </form>
+                <!-- Delete user -->
+                <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" style="display:inline;">
+                  {{ confirm_form.hidden_tag() }}
+                  <button class="btn btn-sm btn-danger" onclick="return confirm('Delete user {{ user.username }} and their papers?')">Delete</button>
+                </form>
+             </div>
             </td>
           </tr>
           {% endfor %}
