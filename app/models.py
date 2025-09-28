@@ -2,6 +2,8 @@
 from . import db, bcrypt
 from flask_login import UserMixin
 from datetime import datetime
+from flask import current_app
+import os
 
 # ------------------------------------------
 # User model represents registered users
@@ -17,6 +19,10 @@ class User(UserMixin, db.Model):
 
     # 🔹 New role field (default = "user", can also be "admin")
     role = db.Column(db.String(10), nullable=False, default="user")
+    
+    
+    is_active = db.Column(db.Boolean, default=True)
+    is_banned = db.Column(db.Boolean, default=False)
     
     # 🔹 Helper method to check if user is admin
     def is_admin(self):
@@ -34,20 +40,27 @@ class User(UserMixin, db.Model):
         return bcrypt.check_password_hash(self.password_hash, password)
 
 
-
-
 # ------------------------------------------
 # Paper model represents uploaded past papers
 # ------------------------------------------
 class Paper(db.Model):
-    __tablename__ = 'papers'
+    __tablename__ = "papers"
     
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
     subject = db.Column(db.String(100), nullable=False)
     year = db.Column(db.String(10), nullable=True)
-    file_path = db.Column(db.String(200), nullable=False)   # where file is saved
+    
+    # 🔹 store only the filename, not the full path
+    file_path = db.Column(db.String(200), nullable=False)   
+    
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Foreign key: link paper to uploader
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
+    # 🔹 Helper to get full path on disk
+    def get_file_path(self):
+        """Return the absolute path to the stored file"""
+        upload_path = current_app.config["UPLOAD_PATH"]
+        return os.path.join(upload_path, self.file_path)

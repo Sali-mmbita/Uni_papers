@@ -47,6 +47,18 @@
                   <button class="btn btn-sm btn-warning" onclick="return confirm('Demote {{ user.username }} to user?')">Demote</button>
                 </form>
               {% endif %}
+              {% if not user.is_banned %}
+              <!-- show Ban button -->
+              <form method="POST" action="{{ url_for('admin.ban_user', user_id=user.id) }}">
+                {{ confirm_form.hidden_tag() }}
+               <button type="submit" class="btn btn-warning btn-sm">Ban</button>
+              </form>
+              {% else %}
+              <!-- show Unban button -->
+              <form method="POST" action="{{ url_for('admin.unban_user', user_id=user.id) }}">
+                {{ confirm_form.hidden_tag() }}
+               <button type="submit" class="btn btn-success btn-sm">Unban</button>
+              {% endif %}
 
               <!-- Delete user -->
               <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" style="display:inline;">

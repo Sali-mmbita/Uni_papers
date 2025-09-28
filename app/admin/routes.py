@@ -69,6 +69,32 @@ def demote_user(user_id):
     flash(f"{user.username} has been demoted to user.", "success")
     return redirect(url_for("admin.dashboard"))
 
+# Ban user
+@admin.route("/ban_user/<int:user_id>", methods=["POST"])
+@login_required
+@admin_required
+def ban_user(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.role == "admin":
+        flash("You cannot ban another admin.", "danger")
+        return redirect(url_for("admin.admin_dashboard"))
+    user.is_banned = True
+    db.session.commit()
+    flash(f"User {user.username} has been banned.", "success")
+    return redirect(url_for("admin.admin_dashboard"))
+
+
+# Unban user
+@admin.route("/unban_user/<int:user_id>", methods=["POST"])
+@login_required
+@admin_required
+def unban_user(user_id):
+    user = User.query.get_or_404(user_id)
+    user.is_banned = False
+    db.session.commit()
+    flash(f"User {user.username} has been unbanned.", "success")
+    return redirect(url_for("admin.admin_dashboard"))
+
 
 @admin.route("/delete_user/<int:user_id>", methods=["POST"])
 @login_required

@@ -60,8 +60,13 @@ def login():
         if user and bcrypt.check_password_hash(user.password_hash, form.password.data):
             login_user(user, remember=form.remember.data)
 
+            if user.is_banned:
+               flash("Your account has been banned. Contact admin.", "danger")
+               return redirect(url_for("main.login"))
+
+            else:
             # ✅ Flash success message after login
-            flash(f"Welcome back, {user.username}!", "success")
+               flash(f"Welcome back, {user.username}!", "success")
 
             # Redirect to next page (if any), else dashboard
             next_page = request.args.get("next")

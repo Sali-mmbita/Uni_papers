@@ -1,13 +1,28 @@
 # app/main/routes.py
-from flask import Blueprint, render_template, request, redirect, url_for, flash, send_from_directory, current_app
+from flask import (
+    Blueprint, render_template, request, redirect, url_for,
+    flash, send_from_directory, current_app
+)
 from flask_login import login_required, current_user
 import os
 from werkzeug.utils import secure_filename
 from . import main
 from .. import db
-from ..models import Paper   # ✅ import Paper model
+from ..models import Paper
 from ..utils.decorators import admin_required
-from ..forms import PaperUploadForm # ✅ import the upload form
+from ..forms import PaperUploadForm, ConfirmForm  # ✅ import forms
+
+# -------------------------
+# Helpers
+# -------------------------
+def is_allowed(filename):
+    """Check if file extension is allowed based on config"""
+    ext = os.path.splitext(filename)[1].lower()
+    return ext in current_app.config["UPLOAD_EXTENSIONS"]
+
+# -------------------------
+# Routes
+# -------------------------
 
 @main.route("/")
 def home():
@@ -19,17 +34,13 @@ def home():
 def dashboard():
     """Student dashboard - shows all papers with search, filter, and pagination"""
 
-    # Get page number from request, default 1
     page = request.args.get("page", 1, type=int)
-
-    # ✅ Ensure per_page is always >= 1
     per_page = request.args.get("per_page", 5, type=int)
     if per_page < 1:
         per_page = 5
 
-    query = Paper.query  # start with all papers
+    query = Paper.query
 
-    # Optional search and filter
     search = request.args.get("q")
     subject = request.args.get("subject")
     year = request.args.get("year")
@@ -41,84 +52,98 @@ def dashboard():
     if year:
         query = query.filter(Paper.year == year)
 
-    # ✅ Paginate safely
     papers = query.order_by(Paper.uploaded_at.desc()).paginate(page=page, per_page=per_page)
 
     return render_template("dashboard.html", user=current_user, papers=papers)
 
-# Upload route
+
+# -------------------------
+# Upload
+# -------------------------
 @main.route("/upload", methods=["GET", "POST"])
 @login_required
 def upload():
     """Upload new past paper - uses Flask-WTF form (includes CSRF token)."""
     form = PaperUploadForm()
     if form.validate_on_submit():
-        # form.file is a FileStorage
         uploaded = form.file.data
         filename = secure_filename(uploaded.filename)
-        upload_folder = current_app.config["UPLOAD_FOLDER"]
-        os.makedirs(upload_folder, exist_ok=True)
-        filepath = os.path.join(upload_folder, filename)
+
+        if not filename or not is_allowed(filename):
+            flash("Invalid file type. Only PDF and DOCX are allowed.", "danger")
+            return redirect(request.url)
+
+        upload_path = current_app.config["UPLOAD_PATH"]
+        os.makedirs(upload_path, exist_ok=True)
+
+        filepath = os.path.join(upload_path, filename)
         uploaded.save(filepath)
 
-        # Save to database
+        # Save only filename in DB, not full path
         new_paper = Paper(
             title=form.title.data,
             subject=form.subject.data,
             year=form.year.data or None,
-            file_path=filepath,
+            file_path=filename,  # ✅ store only filename
             user_id=current_user.id
         )
-        
-        # Save to DB
+
         db.session.add(new_paper)
         db.session.commit()
         flash("Paper uploaded successfully!", "success")
         return redirect(url_for("main.dashboard"))
 
-    # GET or invalid POST: render the page (form.hidden_tag() will include CSRF)
     return render_template("upload.html", form=form)
 
-# Download route
+
+# -------------------------
+# Download
+# -------------------------
 @main.route("/download/<int:paper_id>")
 @login_required
 def download(paper_id):
     """Download an uploaded paper"""
     paper = Paper.query.get_or_404(paper_id)
-    upload_folder = current_app.config["UPLOAD_FOLDER"]
-    return send_from_directory(upload_folder, os.path.basename(paper.file_path), as_attachment=True)
+    upload_path = current_app.config["UPLOAD_PATH"]
+    return send_from_directory(upload_path, paper.file_path, as_attachment=True)
 
-# Preview route
+
+# -------------------------
+# Preview
+# -------------------------
 @main.route("/preview/<int:paper_id>")
 @login_required
 def preview(paper_id):
     """Preview an uploaded paper (PDFs/images inline, others download)"""
     paper = Paper.query.get_or_404(paper_id)
-    upload_folder = current_app.config["UPLOAD_FOLDER"]
+    upload_path = current_app.config["UPLOAD_PATH"]
 
     return send_from_directory(
-        upload_folder,
-        os.path.basename(paper.file_path),
-        as_attachment=False  # 👈 lets browser preview if supported
+        upload_path,
+        paper.file_path,
+        as_attachment=False
     )
 
-# Delete route
+
+# -------------------------
+# Delete
+# -------------------------
 @main.route("/delete/<int:paper_id>", methods=["POST"])
 @login_required
 def delete_paper(paper_id):
     """Delete a paper (only by the owner)"""
     paper = Paper.query.get_or_404(paper_id)
 
-    # Ensure the logged-in user owns this paper
     if paper.user_id != current_user.id:
         flash("You are not authorized to delete this file.", "danger")
         return redirect(url_for("main.dashboard"))
 
-    # Delete file from disk if it exists
-    if os.path.exists(paper.file_path):
-        os.remove(paper.file_path)
+    upload_path = current_app.config["UPLOAD_PATH"]
+    filepath = os.path.join(upload_path, paper.file_path)
 
-    # Delete from database
+    if os.path.exists(filepath):
+        os.remove(filepath)
+
     db.session.delete(paper)
     db.session.commit()
 
@@ -126,20 +151,19 @@ def delete_paper(paper_id):
     return redirect(url_for("main.dashboard"))
 
 
-# 🔹 Search & filter for papers (global search)
+# -------------------------
+# Global search
+# -------------------------
 @main.route("/papers")
 def papers():
     """Search and filter past papers with pagination"""
 
-    # Get query parameters from search form
-    query = request.args.get("q")  # general search
+    query = request.args.get("q")
     subject_filter = request.args.get("subject")
     year_filter = request.args.get("year")
 
-    # Base query (start with all papers)
     papers_query = Paper.query
 
-    # Apply filters dynamically
     if query:
         papers_query = papers_query.filter(
             (Paper.title.ilike(f"%{query}%")) |
@@ -151,47 +175,36 @@ def papers():
     if year_filter:
         papers_query = papers_query.filter(Paper.year == year_filter)
 
-    # Pagination (6 per page)
     page = request.args.get("page", 1, type=int)
     results = papers_query.order_by(Paper.uploaded_at.desc()).paginate(page=page, per_page=6)
 
     return render_template("papers.html", papers=results)
 
-# ✅ Import ConfirmForm for CSRF protection in delete forms
-from app.forms import ConfirmForm
 
-# User-specific papers view
+# -------------------------
+# User-specific papers
+# -------------------------
 @main.route("/my_papers")
 @login_required
 def my_papers():
     """Show only the logged-in user's uploaded papers with pagination"""
-
     page = request.args.get("page", 1, type=int)
-
     papers = (
         Paper.query.filter_by(user_id=current_user.id)
         .order_by(Paper.uploaded_at.desc())
         .paginate(page=page, per_page=5)
     )
 
-    confirm_form = ConfirmForm()  # ✅ for CSRF in delete forms
-
+    confirm_form = ConfirmForm()
     return render_template("my_papers.html", papers=papers, confirm_form=confirm_form)
 
 
-# Dedicated paper view route
+# -------------------------
+# Dedicated paper view
+# -------------------------
 @main.route("/view/<int:paper_id>")
 @login_required
 def view_paper(paper_id):
     """Dedicated page to view a single paper with details + preview/download links"""
     paper = Paper.query.get_or_404(paper_id)
     return render_template("view_paper.html", paper=paper)
-
-
-# @main.route("/admin/dashboard")
-# @login_required
-# @admin_required
-# def admin_dashboard():
-#     """Admin dashboard showing all uploaded papers"""
-#     papers = Paper.query.order_by(Paper.uploaded_at.desc()).all()
-#     return render_template("admin_dashboard.html", papers=papers)
