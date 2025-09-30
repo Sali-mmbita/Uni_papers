@@ -1,7 +1,8 @@
 # app/models.py
 from . import db, bcrypt
 from flask_login import UserMixin
-from datetime import datetime
+from datetime import datetime 
+from itsdangerous import URLSafeTimedSerializer
 from flask import current_app
 import os
 
@@ -37,7 +38,21 @@ class User(UserMixin, db.Model):
     # Verify hashed password
     def check_password(self, password: str) -> bool:
         return bcrypt.check_password_hash(self.password_hash, password)
+    
+    # Generate a secure token for password reset
+    def get_reset_token(self, expires_sec=3600):
+        s = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
+        return s.dumps({"user_id": self.id})
 
+    # Verify the password reset token
+    @staticmethod
+    def verify_reset_token(token, max_age=3600):
+        s = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
+        try:
+            data = s.loads(token, max_age=max_age)
+            return User.query.get(data["user_id"])
+        except Exception:
+            return None
 
 # ------------------------------------------
 # Paper model represents uploaded past papers
