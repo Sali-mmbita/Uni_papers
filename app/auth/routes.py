@@ -58,7 +58,7 @@ def login():
 
         # Verify password
         if user and bcrypt.check_password_hash(user.password_hash, form.password.data):
-            
+    
             # 🚨 Check if user is banned BEFORE login
             if user.is_banned:
                 flash("Your account has been banned. Contact admin.", "danger")

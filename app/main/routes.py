@@ -214,19 +214,21 @@ def view_paper(paper_id):
     return render_template("view_paper.html", paper=paper)
 
 # -------------------------
-# Password Reset Routes
+# Password Reset
+# -------------------------
 def send_reset_email(user):
     token = user.get_reset_token()
-    msg = EmailMessage("Password Reset Request",
-                  sender="noreply@unipapers.com",
-                  recipients=[user.email])
-    msg.body = f'''To reset your password, visit the following link:
+    msg = EmailMessage(
+        subject="Password Reset Request",
+        body=f'''To reset your password, visit the following link:
 {url_for('main.reset_token', token=token, _external=True)}
 
-If you did not make this request, please ignore this email.
-'''
-    mail.send(msg)
-
+If you did not make this request then simply ignore this email.
+''',
+        from_email="noreply@demo.com",
+        to=[user.email]
+    )
+    msg.send()
 
 # Request reset
 @main.route("/reset_password", methods=["GET", "POST"])
@@ -240,11 +242,10 @@ def reset_request():
         if user:
             send_reset_email(user)
             flash("An email has been sent with instructions to reset your password.", "info")
-            return redirect(url_for("main.login"))
+            return redirect(url_for("auth.login"))
         else:
             flash("No account found with that email.", "danger")
     return render_template("reset_request.html", form=form)
-
 
 # Token route
 @main.route("/reset_password/<token>", methods=["GET", "POST"])
@@ -260,8 +261,8 @@ def reset_token(token):
     form = ResetPasswordForm()
     if form.validate_on_submit():
         hashed_pw = bcrypt.generate_password_hash(form.password.data).decode("utf-8")
-        user.password = hashed_pw
+        user.password_hash = hashed_pw   # ✅ store in correct column
         db.session.commit()
         flash("Your password has been updated! You can now log in.", "success")
-        return redirect(url_for("main.login"))
+        return redirect(url_for("auth.login"))
     return render_template("reset_token.html", form=form)
