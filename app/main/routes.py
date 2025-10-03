@@ -182,6 +182,8 @@ def papers():
     page = request.args.get("page", 1, type=int)
     results = papers_query.order_by(Paper.uploaded_at.desc()).paginate(page=page, per_page=6)
 
+    # single ConfirmForm instance used to render CSRF token for every row's form
+    confirm_form = ConfirmForm()
     return render_template("papers.html", papers=results)
 
 

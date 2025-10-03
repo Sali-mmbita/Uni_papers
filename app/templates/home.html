@@ -1,188 +1,139 @@
-{# app/templates/home.html #}
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CogniPrep — Master Your Subjects, Ace Your Exams</title>
+{% extends "base.html" %}
+{% block title %}CogniPrep - Master Your Subjects, Ace Your Exams{% endblock %}
 
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+{% block head %}
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 
-  <!-- Font Awesome (icons) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <!-- AOS (Animate On Scroll) -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
+<!-- AOS -->
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 
-  <!-- Page CSS -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+<!-- Our Custom CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+{% endblock %}
 
-  <!-- Helpful meta -->
-  <meta name="description" content="CogniPrep — free revision papers, notes and past exams for university students. Search, upload and share.">
-</head>
-<body>
+{% block navbar %}
+<!-- Navigation -->
+<nav id="navbar">
+  <div class="container nav-container">
+    <a href="#" class="logo">CogniPrep</a>
 
-  <!-- NAVBAR -->
-  <header id="site-header" class="site-header">
-    <nav class="nav container">
-      <div class="brand">
-        <!-- Logo suggestion: CogniPrep (brain + book icon) -->
-        <a href="{{ url_for('main.home') }}" class="logo">
-          <i class="fa-solid fa-brain"></i>
-          <span class="logo-text">CogniPrep</span>
-        </a>
+    <!-- MOBILE MENU ICON -->
+    <div class="mobile-menu">
+      <i class="fas fa-bars"></i>
+    </div>
+
+    <!-- LINKS (toggle on mobile) -->
+    <div class="nav-menu">
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How It Works</a>
+        <a href="#cta">Get Started</a>
       </div>
-
-      <ul class="nav-links">
-        <li><a href="#features">Features</a></li>
-        <li><a href="#how">How It Works</a></li>
-        <li><a href="{{ url_for('auth.register') }}">Register</a></li>
-        <li><a class="btn-login" href="{{ url_for('auth.login') }}">Login</a></li>
-      </ul>
-
-      <button id="nav-toggle" class="nav-toggle" aria-label="Open menu">
-        <i class="fa fa-bars"></i>
-      </button>
-    </nav>
-  </header>
-
-  <!-- HERO -->
-  <section id="hero" class="hero">
-    <div class="hero-bg"></div> <!-- decorative layer (gradient/particles via CSS) -->
-
-    <div class="container hero-inner">
-      <div class="hero-left" data-aos="fade-right">
-        <h1 class="hero-title">
-          <span id="typed" class="typed"></span><span class="cursor">|</span>
-        </h1>
-        <p class="hero-tagline">Master Your Subjects, Ace Your Exams.</p>
-
-        <!-- Search bar -->
-        <form class="hero-search" action="{{ url_for('main.papers') }}" method="GET" role="search">
-          <div class="search-wrap">
-            <i class="fa fa-search search-icon" aria-hidden="true"></i>
-            <input name="q" type="search" placeholder="Search for past papers, notes, and subjects..." aria-label="Search">
-            <button class="btn-primary" type="submit">Search</button>
-          </div>
-        </form>
-
-        <div class="hero-cta" data-aos="fade-up" data-aos-delay="300">
-          <a class="btn-cta" href="{{ url_for('main.papers') }}">Explore the Library</a>
-          <a class="link-secondary" href="{{ url_for('auth.register') }}">Create an account</a>
-        </div>
-      </div>
-
-      <div class="hero-right" data-aos="fade-left">
-        <!-- decorative floating icon -->
-        <div class="floating-icon" aria-hidden="true">
-          <i class="fa-solid fa-graduation-cap fa-4x"></i>
-        </div>
-
-        <!-- optional space for featured paper cards or an illustration -->
-        <div class="hero-cards">
-          <div class="card small" data-aos="zoom-in" data-aos-delay="400">
-            <h4>Featured</h4>
-            <p>Mathematics – Final (2024)</p>
-          </div>
-          <div class="card small" data-aos="zoom-in" data-aos-delay="500">
-            <h4>Popular</h4>
-            <p>Algorithms – Midterm</p>
-          </div>
-        </div>
+      <div class="nav-buttons">
+        <a href="{{ url_for('auth.login') }}" class="btn-login">Login</a>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Register</a>
       </div>
     </div>
-  </section>
+  </div>
+</nav>
+{% endblock %}
 
-  <!-- FEATURES -->
-  <section id="features" class="section features container">
-    <h2 class="section-title" data-aos="fade-up">Why Choose CogniPrep?</h2>
-    <div class="features-grid">
-      <article class="feature-card" data-aos="fade-up" data-aos-delay="100">
-        <i class="fa-solid fa-book-open feature-icon"></i>
-        <h3>Vast Paper Library</h3>
-        <p>Thousands of past papers and notes, organized by subject and year.</p>
-      </article>
-
-      <article class="feature-card" data-aos="fade-up" data-aos-delay="200">
-        <i class="fa-solid fa-graduation-cap feature-icon"></i>
-        <h3>Subject-Specific Notes</h3>
-        <p>Concise study notes focused on what examiners ask for.</p>
-      </article>
-
-      <article class="feature-card" data-aos="fade-up" data-aos-delay="300">
-        <i class="fa-solid fa-robot feature-icon"></i>
-        <h3>AI-Powered Search <small>(coming soon)</small></h3>
-        <p>Smarter search results ranking most relevant papers first.</p>
-      </article>
-    </div>
-  </section>
-
-  <!-- HOW IT WORKS -->
-  <section id="how" class="section how container">
-    <h2 class="section-title" data-aos="fade-up">Get Started in 3 Simple Steps</h2>
-
-    <div class="steps-wrap" data-aos="fade-up" data-aos-delay="150">
-      <!-- vertical/horizontal responsive timeline -->
-      <div class="progress-line" id="progress-line" aria-hidden="true"></div>
-
-      <div class="steps">
-        <div class="step" data-step="1" data-aos="fade-up" data-aos-delay="200">
-          <div class="step-number">1</div>
-          <div class="step-content">
-            <h4>Search Your Course</h4>
-            <p>Type your course or module name to find relevant materials.</p>
-          </div>
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-bg"></div>
+    <div class="floating-icon book"><i class="fas fa-book"></i></div>
+    <div class="floating-icon cap"><i class="fas fa-graduation-cap"></i></div>
+    <div class="container hero-content">
+        <h1 id="typed-text"></h1>
+        <p class="tagline">Master Your Subjects, Ace Your Exams</p>
+        <div class="search-container">
+            <input type="text" class="search-input" placeholder="Search for past papers, notes, and subjects...">
+            <div class="search-icon"><i class="fas fa-search"></i></div>
         </div>
-
-        <div class="step" data-step="2" data-aos="fade-up" data-aos-delay="300">
-          <div class="step-number">2</div>
-          <div class="step-content">
-            <h4>Find & Filter Papers</h4>
-            <p>Filter by year, subject or exam type to refine results quickly.</p>
-          </div>
-        </div>
-
-        <div class="step" data-step="3" data-aos="fade-up" data-aos-delay="400">
-          <div class="step-number">3</div>
-          <div class="step-content">
-            <h4>Download & Revise</h4>
-            <p>Download PDFs and mark them as favorites for quick access.</p>
-          </div>
-        </div>
-      </div>
+        <a href="#features" class="btn btn-secondary">Explore Features</a>
     </div>
-  </section>
+</section>
 
-  <!-- CTA -->
-  <section class="cta container" data-aos="zoom-in">
-    <h2>Ready to Elevate Your Revision?</h2>
-    <p>Join thousands of students who rely on CogniPrep to succeed.</p>
-    <a href="{{ url_for('main.papers') }}" class="btn-primary btn-pulse">Explore the Library Now</a>
-  </section>
-
-  <!-- FOOTER -->
-  <footer class="site-footer">
-    <div class="container footer-inner">
-      <div>© 2025 CogniPrep. All rights reserved.</div>
-      <div class="footer-links">
-        <a href="#">Privacy</a>
-        <a href="#">Terms</a>
-      </div>
+<!-- Features Section -->
+<section class="features" id="features">
+    <div class="container">
+        <h2 data-aos="fade-up">Why Choose CogniPrep?</h2>
+        <div class="features-grid">
+            <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
+                <div class="feature-icon"><i class="fas fa-book-open"></i></div>
+                <h3>Vast Paper Library</h3>
+                <p>Access thousands of past exam papers from universities across the country, all organized by subject and year.</p>
+            </div>
+            <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
+                <div class="feature-icon"><i class="fas fa-sticky-note"></i></div>
+                <h3>Subject-Specific Notes</h3>
+                <p>Comprehensive study notes created by top students and professors, tailored to your course requirements.</p>
+            </div>
+            <div class="feature-card" data-aos="fade-up" data-aos-delay="300">
+                <div class="feature-icon"><i class="fas fa-robot"></i></div>
+                <h3>AI-Powered Search</h3>
+                <p>Our intelligent search helps you find exactly what you need faster. (Coming Soon)</p>
+            </div>
+        </div>
     </div>
-  </footer>
+</section>
 
-  <!-- Scripts -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
-  <script src="{{ url_for('static', filename='js/home.js') }}"></script>
+<!-- How It Works Section -->
+<section class="how-it-works" id="how-it-works">
+    <div class="container">
+        <h2 data-aos="fade-up">Get Started in 3 Simple Steps</h2>
+        <div class="steps-container">
+            <div class="step" data-aos="fade-right">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>Search Your Course</h3>
+                    <p>Find your university, course, and specific subjects to access relevant materials.</p>
+                </div>
+            </div>
+            <div class="step" data-aos="fade-right" data-aos-delay="100">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>Find & Filter Papers</h3>
+                    <p>Browse through past papers and filter by year, semester, or difficulty level.</p>
+                </div>
+            </div>
+            <div class="step" data-aos="fade-right" data-aos-delay="200">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3>Download & Revise</h3>
+                    <p>Download materials, create your study plan, and track your revision progress.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
-  <!-- Init AOS -->
-  <script>
-    AOS.init({
-      once: true,
-      duration: 700,
-      easing: 'ease-out-cubic'
-    });
-  </script>
-</body>
-</html>
+<!-- CTA -->
+<section class="cta" id="cta">
+    <div class="container">
+        <h2 data-aos="fade-up">Ready to Elevate Your Revision?</h2>
+        <p data-aos="fade-up" data-aos-delay="100">Join thousands of students who are already acing their exams with CogniPrep.</p>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-cta" data-aos="zoom-in" data-aos-delay="200">Explore the Library Now</a>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <p>&copy; 2025 CogniPrep. All rights reserved.</p>
+    </div>
+</footer>
+{% endblock %}
+{% block scripts %}
+<!-- JS Libraries -->
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<!-- Our Custom JS -->
+<script src="{{ url_for('static', filename='js/home.js') }}" defer></script>
+{% endblock %}

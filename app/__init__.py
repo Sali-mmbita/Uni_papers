@@ -6,6 +6,8 @@ from flask_login import LoginManager
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 from flask_mailman import Mail
+from datetime import timedelta
+
 # from flask_wtf import CSRFProtect
 import os
 
@@ -32,6 +34,7 @@ def create_app():
 
     # Core settings
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev_secret_key")
+      
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "sqlite:///site.db")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -48,6 +51,16 @@ def create_app():
     app.config["MAIL_USERNAME"] = os.environ.get("EMAIL_USER")
     app.config["MAIL_PASSWORD"] = os.environ.get("EMAIL_PASS")
     app.config["MAIL_BACKEND"] = "console"
+    
+    # Security & session settings
+    app.config["SESSION_COOKIE_HTTPONLY"] = True
+    app.config["SESSION_COOKIE_SECURE"] = True        # requires HTTPS
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+    app.config["REMEMBER_COOKIE_HTTPONLY"] = True
+    app.config["REMEMBER_COOKIE_SECURE"] = True       # requires HTTPS
+
+    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)
     
     # Initialize extensions
     db.init_app(app)
@@ -71,5 +84,13 @@ def create_app():
     app.register_blueprint(auth_blueprint)
     app.register_blueprint(main_blueprint)
     app.register_blueprint(admin_blueprint, url_prefix="/admin")
+    
+    # Custom error handler for CSRF errors
+    from flask_wtf.csrf import CSRFError
+    @app.errorhandler(CSRFError)
+    def handle_csrf_error(e):
+        from flask import render_template, flash, redirect, url_for
+        flash("Your session expired or the form was invalid. Please try again.", "danger")
+        return render_template("errors/403.html"), 403
 
     return app

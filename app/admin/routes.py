@@ -21,9 +21,9 @@ def dashboard():
     papers = Paper.query.order_by(Paper.uploaded_at.desc()).paginate(page=paper_page, per_page=per_page)
 
     # single ConfirmForm instance used to render CSRF token for every row's form
-    confirm_form = ConfirmForm()
+    form = ConfirmForm()
 
-    return render_template("admin/admin_dashboard.html", users=users, papers=papers, confirm_form=confirm_form)
+    return render_template("admin/admin_dashboard.html", users=users, papers=papers, form=form)
 
 
 # All action routes validate CSRF by checking the form.validate_on_submit()
@@ -75,6 +75,7 @@ def demote_user(user_id):
 @admin_required
 def ban_user(user_id):
     user = User.query.get_or_404(user_id)
+    form = ConfirmForm()
     if user.role == "admin":
         flash("You cannot ban another admin.", "danger")
         return redirect(url_for("admin.dashboard"))
@@ -89,13 +90,14 @@ def ban_user(user_id):
 @login_required
 @admin_required
 def unban_user(user_id):
+    form = ConfirmForm()
     user = User.query.get_or_404(user_id)
     user.is_banned = False
     db.session.commit()
     flash(f"User {user.username} has been unbanned.", "success")
     return redirect(url_for("admin.dashboard"))
 
-
+# Delete user and their papers
 @admin.route("/delete_user/<int:user_id>", methods=["POST"])
 @login_required
 @admin_required

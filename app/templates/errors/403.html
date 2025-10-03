@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}CSRF Error{% endblock %}
+
+{% block content %}
+<div class="alert alert-danger mt-3">
+  <h4 class="alert-heading">Security Error</h4>
+  <p>Your session has expired or the form submission was invalid.</p>
+  <hr>
+  <a href="{{ url_for('main.index') }}" class="btn btn-primary">Go back home</a>
+</div>
+{% endblock %}
