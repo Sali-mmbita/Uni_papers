@@ -1,14 +1,12 @@
-flask
-flask_sqlalchemy
-flask_migrate
-flask_login
-flask_wtf
-wtforms
-email_validator
-flask_bcrypt
-itsdangerous
-pyotp
-pymysql
-python-dotenv
-flask-mailman
-gunicorn
+Flask==3.1.2
+Flask-Bcrypt==1.0.1
+Flask-Login==0.6.3
+Flask-Mailman==1.1.1  # only if you use it
+Flask-Migrate==4.1.0
+Flask-SQLAlchemy==3.1.1
+Flask-WTF==1.2.2
+email-validator==2.3.0
+pyotp==2.9.0
+PyMySQL==1.1.2        # only if MySQL
+python-dotenv==1.2.1
+gunicorn==23.0.0

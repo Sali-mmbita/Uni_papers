@@ -188,13 +188,16 @@ nav.scrolled .mobile-menu {
     justify-content: space-between;
     align-items: center;
 }
-
-.logo {
+ .logo {
     font-family: 'Playfair Display', serif;
     font-size: 1.8rem;
     font-weight: 700;
     color: var(--white);
-}
+} 
+
+/* .logoimg{
+   height: 20%;
+} */
 
 .nav-links {
     display: flex;

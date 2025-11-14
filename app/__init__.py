@@ -3,13 +3,15 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
-from dotenv import load_dotenv
 from flask_migrate import Migrate
 from flask_mailman import Mail
 from datetime import timedelta
-
-# from flask_wtf import CSRFProtect
+from flask_wtf.csrf import CSRFError
+from dotenv import load_dotenv
 import os
+
+# Configs
+from .config import DevelopmentConfig, ProductionConfig
 
 load_dotenv()
 
@@ -19,8 +21,8 @@ bcrypt = Bcrypt()
 login_manager = LoginManager()
 migrate = Migrate()
 mail = Mail()
-# csrf = CSRFProtect()
 
+# Flask-Login settings
 login_manager.login_view = "auth.login"
 login_manager.login_message_category = "info"
 
@@ -29,20 +31,25 @@ BASE_DIR = os.getcwd()
 UPLOAD_PATH = os.path.join(BASE_DIR, "uploads", "papers")
 ALLOWED_EXTENSIONS = [".pdf", ".docx"]
 
-def create_app():
+def create_app(config_class=None):
+    """Flask application factory."""
     app = Flask(__name__)
 
-    # Core settings
-    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev_secret_key")
-      
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "sqlite:///site.db")
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    # Load config
+    if config_class:
+        app.config.from_object(config_class)
+    else:
+        env = os.getenv("FLASK_ENV", "development")
+        if env == "production":
+            app.config.from_object(ProductionConfig)
+        else:
+            app.config.from_object(DevelopmentConfig)
 
     # Upload settings
     app.config["UPLOAD_PATH"] = UPLOAD_PATH
     app.config["UPLOAD_EXTENSIONS"] = ALLOWED_EXTENSIONS
     app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10 MB
-    os.makedirs(UPLOAD_PATH, exist_ok=True)
+    os.makedirs(app.config["UPLOAD_PATH"], exist_ok=True)
 
     # Mail settings
     app.config["MAIL_SERVER"] = "smtp.gmail.com"
@@ -51,24 +58,21 @@ def create_app():
     app.config["MAIL_USERNAME"] = os.environ.get("EMAIL_USER")
     app.config["MAIL_PASSWORD"] = os.environ.get("EMAIL_PASS")
     app.config["MAIL_BACKEND"] = "console"
-    
+
     # Security & session settings
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SECURE"] = True        # requires HTTPS
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-
     app.config["REMEMBER_COOKIE_HTTPONLY"] = True
     app.config["REMEMBER_COOKIE_SECURE"] = True       # requires HTTPS
-
     app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)
-    
+
     # Initialize extensions
     db.init_app(app)
     bcrypt.init_app(app)
     login_manager.init_app(app)
     migrate.init_app(app, db)
     mail.init_app(app)
-    # csrf.init_app(app)
 
     # User loader
     @login_manager.user_loader
@@ -84,12 +88,11 @@ def create_app():
     app.register_blueprint(auth_blueprint)
     app.register_blueprint(main_blueprint)
     app.register_blueprint(admin_blueprint, url_prefix="/admin")
-    
-    # Custom error handler for CSRF errors
-    from flask_wtf.csrf import CSRFError
+
+    # CSRF error handler
     @app.errorhandler(CSRFError)
     def handle_csrf_error(e):
-        from flask import render_template, flash, redirect, url_for
+        from flask import render_template, flash
         flash("Your session expired or the form was invalid. Please try again.", "danger")
         return render_template("errors/403.html"), 403
 
