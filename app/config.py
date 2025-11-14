@@ -10,6 +10,7 @@ class Config:
     # File Upload Security
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max
     UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
     # Flask Security Hardening
     SESSION_COOKIE_HTTPONLY = True
