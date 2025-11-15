@@ -96,4 +96,10 @@ def create_app(config_class=None):
         flash("Your session expired or the form was invalid. Please try again.", "danger")
         return render_template("errors/403.html"), 403
 
+    
+    # Create tables if they don't exist (for free hosting without shell)
+    with app.app_context():
+        from . import models
+        db.create_all()
+        
     return app
