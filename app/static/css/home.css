@@ -129,35 +129,67 @@ nav {
 .nav-menu {
   display: flex;
   gap: 1.5rem;
-  transition: max-height 0.4s ease, opacity 0.4s ease;
+}
+
+.nav-links{
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 12px;
 }
 
 @media (max-width: 768px) {
-  .nav-menu {
-    display: none;              /* hidden initially */
-    flex-direction: column;
-    background:  #768c9d;
-    position: absolute;
-    top: 70px;                  /* below navbar */
-    left: 0;
-    width: 100%;
-    padding: 20px;
-    max-height: 0;      /* collapsed */
-    opacity: 0; 
-    box-shadow: var(--shadow);
-  }
+ .nav-menu {
+  position: absolute;
+  top: 75px;
+  right: 0;
+  width: 0;                 /* collapse from right */
+  height: 0;                /* collapsed vertically */
+  overflow: hidden;
+  opacity: 0;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  flex-direction: column;
+  box-shadow: var(--shadow);
+  transition: 
+      width 0.4s ease,
+      height 0.4s ease,
+      opacity 0.3s ease,
+      transform 0.4s ease;
+  
+  transform: translateX(50%); /* Slight push off-screen */
+  visibility: hidden;
+}
 
-  .nav-menu.active {
+/* Expanded menu */
+.nav-menu.active {
+  width: 60%;               /* Slide-out width */
+  height: 100vh;            /* Full vertical expansion */
+  opacity: 1;
+  transform: translateX(0); /* Slide into place */
+  visibility: visible;
+}
+
+  .nav-links , .nav-buttons{
     display: flex;
-    max-height: 400px;  /* expanded */
-    opacity: 1;  
+    flex-direction: column;
+    align-content: space-between;
+    justify-content: center;
+    gap: 30px;
+  }
+  .nav-links{
+    align-items: center;
+  }
+  .nav-buttons{
+    text-align: center;
+    margin: 0 12px;
   }
 
   .nav-links a,
   .nav-buttons a {
     color: var(--primary);
     padding: 10px 0;
-    display: block;
   }
 }
 
@@ -194,17 +226,6 @@ nav.scrolled .mobile-menu {
     font-weight: 700;
     color: var(--white);
 } 
-
-/* .logoimg{
-   height: 20%;
-} */
-
-.nav-links {
-    display: flex;
-    gap: 30px;
-    align-items: center;
-}
-
 .nav-links a {
     color: var(--white);
     font-weight: 500;
@@ -214,14 +235,6 @@ nav.scrolled .mobile-menu {
 .nav-links a:hover {
     color: var(--secondary);
 }
-
-.nav-buttons {
-    display: flex;
-    gap: 15px;
-    align-items: center;
-    justify-content: space-between;
-}
-
 .btn-login {
     background: transparent;
     color: var(--white);
